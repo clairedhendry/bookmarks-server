@@ -2,6 +2,7 @@ const express = require('express')
 const { lists } = require('../store')
 const { v4: uuid } = require('uuid')
 const logger = require('../logger')
+const { isWebUri } = require('valid-url')
 
 const bookmarksRouter = express.Router()
 const bodyParser = express.json()
@@ -12,14 +13,18 @@ bookmarksRouter
         res.send(lists)
     })
     .post(bodyParser, (req, res) => {
-        const { title, rating, description="" } = req.body;
+        const { title, rating, url, description="" } = req.body;
         if(!title) {
             logger.error(`Title is required`);
             return res.status(400).send('Invalid data');
         }
         if(!rating) {
-            logger.error(`Content is required`);
+            logger.error(`Rating is required`);
             return res.status(400).send('Invalid data');
+        }
+        if(!isWebUri(url)) {
+            logger.error(`${url} is not valid.`)
+            return res.status(400).send('Invalid url')
         }
         
         const id = uuid();
@@ -27,6 +32,7 @@ bookmarksRouter
             id,
             title,
             rating,
+            url,
             description
         };
         lists.push(bookmark);
